@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -33,7 +33,10 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      JWT_SECRET: ${JWT_SECRET:-tavalendo-secret-key-padrao-desenvolvimento-2026}
+      SECURITY_JWT_SECRET: ${SECURITY_JWT_SECRET:-tavalendo-secret-key-padrao-desenvolvimento-2026-com-pelo-menos-32-bytes}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@tavalendo.com}
+      ADMIN_SENHA: ${ADMIN_SENHA:-troque-em-producao}
+      ADMIN_NOME: ${ADMIN_NOME:-Administrador TaValendo}
 
 volumes:
   postgres_data:

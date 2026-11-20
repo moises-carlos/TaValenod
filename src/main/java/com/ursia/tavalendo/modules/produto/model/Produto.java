@@ -44,6 +44,16 @@ public class Produto extends EntidadeBase<Long> {
     @Column(nullable = false)
     private Integer quantidade;
 
+    @Column(length = 80)
+    private String categoria;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "motivo_baixa", length = 30)
+    private MotivoBaixa motivoBaixa;
+
+    @Column(name = "data_baixa")
+    private LocalDate dataBaixa;
+
     @Column(name = "data_validade", nullable = false)
     private LocalDate dataValidade;
 
@@ -52,6 +62,6 @@ public class Produto extends EntidadeBase<Long> {
     private SituacaoValidade situacaoValidade;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "estabelecimento_id")
+    @JoinColumn(name = "estabelecimento_id", nullable = false)
     private Estabelecimento estabelecimento;
 }

@@ -34,8 +34,4 @@ public class Estabelecimento extends EntidadeBase<Long> {
 
     @Column(length = 255)
     private String endereco;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean ativo = true;
 }

@@ -14,6 +14,8 @@ public record ProdutoRequestDTO(
         @NotBlank(message = "O nome do produto é obrigatório.")
         String nome,
 
+        String categoria,
+
         String codigoBarras,
 
         String lote,
@@ -23,8 +25,6 @@ public record ProdutoRequestDTO(
         Integer quantidade,
 
         @NotNull(message = "A data de validade é obrigatória.")
-        LocalDate dataValidade,
-
-        Long estabelecimentoId
+        LocalDate dataValidade
 ) {
 }

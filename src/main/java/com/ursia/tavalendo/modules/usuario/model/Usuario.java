@@ -32,7 +32,7 @@ public class Usuario extends EntidadeBase<Long> {
     @Column(nullable = false, length = 120)
     private String nome;
 
-    @Column(nullable = false, unique = true, length = 150)
+    @Column(nullable = false, length = 150)
     private String email;
 
     @Column(nullable = false)
@@ -46,8 +46,4 @@ public class Usuario extends EntidadeBase<Long> {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "estabelecimento_id")
     private Estabelecimento estabelecimento;
-
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean ativo = true;
 }

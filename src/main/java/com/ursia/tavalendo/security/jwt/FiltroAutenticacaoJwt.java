@@ -38,16 +38,20 @@ public class FiltroAutenticacaoJwt extends OncePerRequestFilter {
         String token = extrairTokenDoHeader(request);
 
         if (StringUtils.hasText(token) && provedorTokenJwt.validarToken(token)) {
-            String email = provedorTokenJwt.extrairSubject(token);
-            UserDetails userDetails = usuarioDetalhesService.loadUserByUsername(email);
+            try {
+                String email = provedorTokenJwt.extrairSubject(token);
+                UserDetails userDetails = usuarioDetalhesService.loadUserByUsername(email);
 
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities()
-            );
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            } catch (Exception e) {
+                SecurityContextHolder.clearContext();
+            }
         }
 
         filterChain.doFilter(request, response);

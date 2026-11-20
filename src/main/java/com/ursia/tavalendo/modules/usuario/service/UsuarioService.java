@@ -3,7 +3,8 @@ package com.ursia.tavalendo.modules.usuario.service;
 import com.ursia.tavalendo.core.base.ServiceGenericoAbstrato;
 import com.ursia.tavalendo.exception.custom.RecursoNaoEncontradoException;
 import com.ursia.tavalendo.exception.custom.RegraNegocioException;
-import com.ursia.tavalendo.modules.usuario.dto.UsuarioRequestDTO;
+import com.ursia.tavalendo.modules.usuario.dto.CriarGerenteRequestDTO;
+import com.ursia.tavalendo.modules.usuario.dto.CriarOperadorRequestDTO;
 import com.ursia.tavalendo.modules.usuario.dto.UsuarioResponseDTO;
 import com.ursia.tavalendo.modules.usuario.model.Estabelecimento;
 import com.ursia.tavalendo.modules.usuario.model.Role;
@@ -15,9 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Serviço responsável pelas regras de negócio do domínio de {@link Usuario}.
- * Gerencia o cadastro de novos usuários, validação de unicidade de e-mail,
- * criptografia de senha e associação com o estabelecimento.
+ * Serviço responsável pelas regras de negócio do domínio de Usuario.
+ * Gerencia criação de GERENTE (pelo ADMIN do sistema) e
+ * criação de OPERADOR/GERENTE (pelo GERENTE do estabelecimento).
  */
 @Service
 public class UsuarioService extends ServiceGenericoAbstrato<Usuario, Long> {
@@ -38,26 +39,68 @@ public class UsuarioService extends ServiceGenericoAbstrato<Usuario, Long> {
     }
 
     @Transactional
-    public UsuarioResponseDTO cadastrar(UsuarioRequestDTO dto) {
-        if (usuarioRepository.existsByEmail(dto.email())) {
-            throw new RegraNegocioException("Já existe um usuário cadastrado com este e-mail.");
-        }
+    public UsuarioResponseDTO criarGerente(CriarGerenteRequestDTO dto) {
+        validarEmailUnico(dto.email());
 
-        Estabelecimento estabelecimento = null;
-        if (dto.estabelecimentoId() != null) {
-            estabelecimento = estabelecimentoRepository.findById(dto.estabelecimentoId())
-                    .orElseThrow(() -> new RecursoNaoEncontradoException(
-                            "Estabelecimento não encontrado para o ID: " + dto.estabelecimentoId()));
-        }
+        Estabelecimento estabelecimento = estabelecimentoRepository
+                .findById(dto.estabelecimentoId())
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Estabelecimento não encontrado para o ID: " + dto.estabelecimentoId()));
+
+        Usuario gerente = Usuario.builder()
+                .nome(dto.nome())
+                .email(normalizar(dto.email()))
+                .senha(passwordEncoder.encode(dto.senha()))
+                .role(Role.GERENTE)
+                .estabelecimento(estabelecimento)
+                .build();
+
+        return UsuarioResponseDTO.deEntidade(salvar(gerente));
+    }
+
+    @Transactional
+    public UsuarioResponseDTO criarUsuarioNaLoja(
+            CriarOperadorRequestDTO dto,
+            Long estabelecimentoId,
+            Role role
+    ) {
+        validarEmailUnico(dto.email());
+
+        Estabelecimento estabelecimento = estabelecimentoRepository
+                .findById(estabelecimentoId)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Estabelecimento não encontrado para o ID: " + estabelecimentoId));
 
         Usuario usuario = Usuario.builder()
                 .nome(dto.nome())
-                .email(dto.email())
+                .email(normalizar(dto.email()))
                 .senha(passwordEncoder.encode(dto.senha()))
-                .role(dto.role() != null ? dto.role() : Role.OPERADOR)
+                .role(role)
                 .estabelecimento(estabelecimento)
                 .build();
 
         return UsuarioResponseDTO.deEntidade(salvar(usuario));
+    }
+
+    private void validarEmailUnico(String email) {
+        if (usuarioRepository.existsByEmailAndAtivoTrue(normalizar(email))) {
+            throw new RegraNegocioException("Já existe um usuário cadastrado com este e-mail.");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Long buscarEstabelecimentoIdPorEmail(String email) {
+        Usuario usuario = usuarioRepository.findByEmailAndAtivoTrue(email)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado: " + email));
+
+        if (usuario.getEstabelecimento() == null) {
+            throw new RegraNegocioException("Usuário não está vinculado a nenhum estabelecimento.");
+        }
+
+        return usuario.getEstabelecimento().getId();
+    }
+
+    private String normalizar(String email) {
+        return email.trim().toLowerCase();
     }
 }

@@ -2,14 +2,19 @@ package com.ursia.tavalendo.modules.usuario.controller;
 
 import com.ursia.tavalendo.core.base.ControllerGenerico;
 import com.ursia.tavalendo.core.base.RespostaApi;
-import com.ursia.tavalendo.modules.usuario.dto.UsuarioRequestDTO;
+import com.ursia.tavalendo.modules.usuario.dto.CriarGerenteRequestDTO;
+import com.ursia.tavalendo.modules.usuario.dto.CriarOperadorRequestDTO;
 import com.ursia.tavalendo.modules.usuario.dto.UsuarioResponseDTO;
+import com.ursia.tavalendo.modules.usuario.model.Role;
 import com.ursia.tavalendo.modules.usuario.model.Usuario;
 import com.ursia.tavalendo.modules.usuario.service.UsuarioService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,9 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Controller REST responsável pelos endpoints de gerenciamento de usuários ({@code /api/v1/usuarios}).
- * Expõe rotas para cadastro, consulta e exclusão lógica com controle de acesso por perfil (RBAC).
+ * Controller REST responsável pelos endpoints de gerenciamento de usuários (/api/v1/usuarios).
+ * ADMIN do sistema cria GERENTEs. GERENTEs criam OPERADOREs e outros GERENTEs na própria loja.
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/usuarios")
 public class UsuarioController extends ControllerGenerico<Usuario, Long, UsuarioResponseDTO> {
@@ -40,11 +46,38 @@ public class UsuarioController extends ControllerGenerico<Usuario, Long, Usuario
         return UsuarioResponseDTO.deEntidade(entidade);
     }
 
-    @PostMapping("/cadastro")
-    public ResponseEntity<RespostaApi<UsuarioResponseDTO>> cadastrar(@Valid @RequestBody UsuarioRequestDTO dto) {
-        UsuarioResponseDTO resposta = usuarioService.cadastrar(dto);
+    @PostMapping("/gerente")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RespostaApi<UsuarioResponseDTO>> criarGerente(
+            @Valid @RequestBody CriarGerenteRequestDTO dto
+    ) {
+        UsuarioResponseDTO resposta = usuarioService.criarGerente(dto);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(RespostaApi.criado(resposta, "Usuário cadastrado com sucesso."));
+                .body(RespostaApi.criado(resposta, "Gerente criado com sucesso."));
+    }
+
+    @PostMapping("/operador")
+    @PreAuthorize("hasRole('GERENTE')")
+    public ResponseEntity<RespostaApi<UsuarioResponseDTO>> criarOperador(
+            @Valid @RequestBody CriarOperadorRequestDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        Long estabelecimentoId = usuarioService.buscarEstabelecimentoIdPorEmail(userDetails.getUsername());
+        UsuarioResponseDTO resposta = usuarioService.criarUsuarioNaLoja(dto, estabelecimentoId, Role.OPERADOR);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(RespostaApi.criado(resposta, "Operador criado com sucesso."));
+    }
+
+    @PostMapping("/gerente-loja")
+    @PreAuthorize("hasRole('GERENTE')")
+    public ResponseEntity<RespostaApi<UsuarioResponseDTO>> criarGerenteLoja(
+            @Valid @RequestBody CriarOperadorRequestDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        Long estabelecimentoId = usuarioService.buscarEstabelecimentoIdPorEmail(userDetails.getUsername());
+        UsuarioResponseDTO resposta = usuarioService.criarUsuarioNaLoja(dto, estabelecimentoId, Role.GERENTE);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(RespostaApi.criado(resposta, "Gerente criado com sucesso."));
     }
 
     @Override

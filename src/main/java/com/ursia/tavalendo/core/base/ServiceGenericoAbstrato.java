@@ -24,12 +24,16 @@ public abstract class ServiceGenericoAbstrato<T extends EntidadeBase<ID>, ID ext
         this.repository = repository;
     }
 
+
+    protected void antesDeSalvar(T entidade) {
+    }
+
     @Override
     @Transactional
     public T salvar(T entidade) {
+        antesDeSalvar(entidade);
         return repository.save(entidade);
     }
-
     @Override
     @Transactional(readOnly = true)
     public T buscarPorId(ID id) {
