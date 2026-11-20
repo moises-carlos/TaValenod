@@ -4,6 +4,7 @@ import com.ursia.tavalendo.core.base.ControllerGenerico;
 import com.ursia.tavalendo.core.base.RespostaApi;
 import com.ursia.tavalendo.modules.produto.dto.BaixaProdutoRequestDTO;
 import com.ursia.tavalendo.modules.produto.dto.DashboardResponseDTO;
+import com.ursia.tavalendo.modules.produto.dto.ProdutoCatalogoResponseDTO;
 import com.ursia.tavalendo.modules.produto.dto.ProdutoRequestDTO;
 import com.ursia.tavalendo.modules.produto.dto.ProdutoResponseDTO;
 import com.ursia.tavalendo.modules.produto.model.MotivoBaixa;
@@ -108,6 +109,14 @@ public class ProdutoController extends ControllerGenerico<Produto, Long, Produto
     ) {
         Page<ProdutoResponseDTO> resultado = produtoService.buscarHistoricoBaixas(motivo, inicio, fim, pageable);
         return ResponseEntity.ok(RespostaApi.sucesso(resultado, "Histórico de baixas carregado com sucesso."));
+    }
+
+    @GetMapping("/codigo/{codigoBarras}")
+    public ResponseEntity<RespostaApi<ProdutoCatalogoResponseDTO>> buscarPorCodigoBarras(
+            @PathVariable String codigoBarras
+    ) {
+        ProdutoCatalogoResponseDTO resposta = produtoService.buscarPorCodigoBarras(codigoBarras);
+        return ResponseEntity.ok(RespostaApi.sucesso(resposta, "Produto localizado no catálogo com sucesso."));
     }
 
     @GetMapping("/dashboard")

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositório Spring Data JPA para persistência e consultas personalizadas da entidade Produto.
@@ -19,6 +20,9 @@ import java.util.List;
 @Repository
 public interface ProdutoRepository extends JpaRepository<Produto, Long>,
         JpaSpecificationExecutor<Produto> {
+
+    Optional<Produto> findFirstByEstabelecimentoIdAndCodigoBarrasOrderByAtivoDescCriadoEmDesc(
+            Long estabelecimentoId, String codigoBarras);
 
     long countByEstabelecimentoIdAndAtivoTrue(Long estabelecimentoId);
 

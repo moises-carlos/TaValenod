@@ -3,8 +3,10 @@ package com.ursia.tavalendo.modules.produto.service;
 import com.ursia.tavalendo.core.base.ServiceGenericoAbstrato;
 import com.ursia.tavalendo.core.utils.DataUtils;
 import com.ursia.tavalendo.exception.custom.RecursoNaoEncontradoException;
+import com.ursia.tavalendo.exception.custom.RegraNegocioException;
 import com.ursia.tavalendo.modules.produto.dto.BaixaProdutoRequestDTO;
 import com.ursia.tavalendo.modules.produto.dto.DashboardResponseDTO;
+import com.ursia.tavalendo.modules.produto.dto.ProdutoCatalogoResponseDTO;
 import com.ursia.tavalendo.modules.produto.dto.ProdutoRequestDTO;
 import com.ursia.tavalendo.modules.produto.dto.ProdutoResponseDTO;
 import com.ursia.tavalendo.modules.produto.model.MotivoBaixa;
@@ -24,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Serviço responsável pelas regras de negócio do domínio de Produto.
@@ -41,18 +44,21 @@ public class ProdutoService extends ServiceGenericoAbstrato<Produto, Long> {
     private final ProdutoRepository produtoRepository;
     private final EstabelecimentoRepository estabelecimentoRepository;
     private final UsuarioAutenticado usuarioAutenticado;
+    private final CatalogoExternoService catalogoExternoService;
     private final Clock clock;
 
     public ProdutoService(
             ProdutoRepository produtoRepository,
             EstabelecimentoRepository estabelecimentoRepository,
             UsuarioAutenticado usuarioAutenticado,
+            CatalogoExternoService catalogoExternoService,
             Clock clock
     ) {
         super(produtoRepository);
         this.produtoRepository = produtoRepository;
         this.estabelecimentoRepository = estabelecimentoRepository;
         this.usuarioAutenticado = usuarioAutenticado;
+        this.catalogoExternoService = catalogoExternoService;
         this.clock = clock;
     }
 
@@ -200,5 +206,29 @@ public class ProdutoService extends ServiceGenericoAbstrato<Produto, Long> {
                 ProdutoSpecification.filtrarHistoricoBaixas(estabelecimentoId, motivo, inicioBaixa, fimBaixa),
                 pageable
         ).map(p -> ProdutoResponseDTO.deEntidade(p, clock));
+    }
+
+    @Transactional(readOnly = true)
+    public ProdutoCatalogoResponseDTO buscarPorCodigoBarras(String codigoBarras) {
+        if (codigoBarras == null || codigoBarras.isBlank()) {
+            throw new RegraNegocioException("O código de barras deve ser informado.");
+        }
+        String codigoLimpo = codigoBarras.trim();
+        Long estabelecimentoId = usuarioAutenticado.getEstabelecimentoId();
+
+        // 1. Prioridade: histórico cadastrado no próprio estabelecimento
+        Optional<Produto> produtoLocal = produtoRepository
+                .findFirstByEstabelecimentoIdAndCodigoBarrasOrderByAtivoDescCriadoEmDesc(
+                        estabelecimentoId, codigoLimpo);
+
+        if (produtoLocal.isPresent()) {
+            Produto p = produtoLocal.get();
+            return ProdutoCatalogoResponseDTO.deEntidade(p, "LOJA");
+        }
+
+        // 2. Fallback: catálogo aberto externo (Open Food Facts)
+        return catalogoExternoService.buscarPorCodigoBarras(codigoLimpo)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Nenhum produto encontrado para o código de barras informado: " + codigoLimpo));
     }
 }

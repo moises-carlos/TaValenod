@@ -99,4 +99,34 @@ class IsolamentoEstabelecimentoTest {
         assertThat(resultado.getContent().get(0).getMotivoBaixa())
                 .isEqualTo(com.ursia.tavalendo.modules.produto.model.MotivoBaixa.DESCARTADO);
     }
+
+    @Test
+    void deveIsolarBuscaDeCodigoDeBarrasPorEstabelecimento() {
+        Estabelecimento lojaA = estabelecimentoRepository.save(
+                Estabelecimento.builder().nome("Loja EAN A").cnpj("55555555555555").build());
+        Estabelecimento lojaB = estabelecimentoRepository.save(
+                Estabelecimento.builder().nome("Loja EAN B").cnpj("66666666666666").build());
+
+        produtoRepository.save(com.ursia.tavalendo.modules.produto.model.Produto.builder()
+                .nome("Café Torrado Loja A")
+                .categoria("Matinais")
+                .codigoBarras("7899999000001")
+                .quantidade(10)
+                .dataValidade(LocalDate.now().plusDays(30))
+                .situacaoValidade(com.ursia.tavalendo.modules.produto.model.SituacaoValidade.ATENCAO)
+                .estabelecimento(lojaA)
+                .build());
+
+        var buscaLojaA = produtoRepository
+                .findFirstByEstabelecimentoIdAndCodigoBarrasOrderByAtivoDescCriadoEmDesc(
+                        lojaA.getId(), "7899999000001");
+        var buscaLojaB = produtoRepository
+                .findFirstByEstabelecimentoIdAndCodigoBarrasOrderByAtivoDescCriadoEmDesc(
+                        lojaB.getId(), "7899999000001");
+
+        assertThat(buscaLojaA).isPresent();
+        assertThat(buscaLojaA.get().getNome()).isEqualTo("Café Torrado Loja A");
+
+        assertThat(buscaLojaB).isEmpty();
+    }
 }

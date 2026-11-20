@@ -1,0 +1,1042 @@
+{
+	"info": {
+		"_postman_id": "c1f7b8a0-7b3d-4c8e-9d21-f9a8b7c6d5e4",
+		"name": "TaValendo API",
+		"description": "Coleção de testes completa para a API do TaValendo (Controle de Validade de Produtos).\n\n### Fluxo de Teste Recomendado:\n1. **Login ADMIN**: Execute para obter o token de administrador.\n2. **Cadastrar Estabelecimento**: Cria uma loja e salva o `estabelecimentoId` automaticamente.\n3. **Cadastrar Gerente**: O ADMIN cria o usuário GERENTE vinculado ao estabelecimento.\n4. **Login GERENTE**: Autentica como GERENTE e atualiza o `token` para operar na loja.\n5. **Consultar Código de Barras (Leitor)**: Simula o bipe do leitor para auto-preencher nome e categoria.\n6. **Cadastrar Produto**: Cadastre o lote e validade do produto.\n7. **Dashboard, Alertas e Baixa**: Gestão completa de validade.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "adminEmail",
+			"value": "admin@tavalendo.com",
+			"type": "string"
+		},
+		{
+			"key": "adminSenha",
+			"value": "troque-em-producao",
+			"type": "string"
+		},
+		{
+			"key": "estabelecimentoId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "gerenteEmail",
+			"value": "gerente@loja1.com",
+			"type": "string"
+		},
+		{
+			"key": "gerenteSenha",
+			"value": "senha123",
+			"type": "string"
+		},
+		{
+			"key": "operadorEmail",
+			"value": "operador@loja1.com",
+			"type": "string"
+		},
+		{
+			"key": "operadorSenha",
+			"value": "senha123",
+			"type": "string"
+		},
+		{
+			"key": "produtoId",
+			"value": "1",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "01 - Autenticação",
+			"item": [
+				{
+					"name": "1. Login ADMIN",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const json = pm.response.json();",
+									"if (json.dados && json.dados.accessToken) {",
+									"    pm.collectionVariables.set(\"token\", json.dados.accessToken);",
+									"    pm.collectionVariables.set(\"refreshToken\", json.dados.refreshToken);",
+									"    console.log(\"Token de ADMIN salvo nas variáveis da coleção!\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"senha\": \"{{adminSenha}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Autentica o ADMIN inicial do sistema criado pelo seed."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Login GERENTE",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const json = pm.response.json();",
+									"if (json.dados && json.dados.accessToken) {",
+									"    pm.collectionVariables.set(\"token\", json.dados.accessToken);",
+									"    pm.collectionVariables.set(\"refreshToken\", json.dados.refreshToken);",
+									"    console.log(\"Token do GERENTE salvo! Próximas requisições operarão no escopo da loja.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{gerenteEmail}}\",\n  \"senha\": \"{{gerenteSenha}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Autentica o GERENTE cadastrado na loja."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Login OPERADOR",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const json = pm.response.json();",
+									"if (json.dados && json.dados.accessToken) {",
+									"    pm.collectionVariables.set(\"token\", json.dados.accessToken);",
+									"    pm.collectionVariables.set(\"refreshToken\", json.dados.refreshToken);",
+									"    console.log(\"Token do OPERADOR salvo!\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{operadorEmail}}\",\n  \"senha\": \"{{operadorSenha}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Autentica o OPERADOR cadastrado."
+					},
+					"response": []
+				},
+				{
+					"name": "4. Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const json = pm.response.json();",
+									"if (json.dados && json.dados.accessToken) {",
+									"    pm.collectionVariables.set(\"token\", json.dados.accessToken);",
+									"    pm.collectionVariables.set(\"refreshToken\", json.dados.refreshToken);",
+									"    console.log(\"Novo Access Token obtido!\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/refresh",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"refresh"
+							]
+						},
+						"description": "Renova o token JWT de acesso utilizando o refresh token."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "02 - Estabelecimentos (ADMIN)",
+			"item": [
+				{
+					"name": "1. Cadastrar Estabelecimento",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"const json = pm.response.json();",
+									"if (json.dados && json.dados.id) {",
+									"    pm.collectionVariables.set(\"estabelecimentoId\", json.dados.id);",
+									"    console.log(\"estabelecimentoId atualizado para: \" + json.dados.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Supermercado Bom Preço\",\n  \"cnpj\": \"12.345.678/0001-99\",\n  \"telefone\": \"(81) 98888-7777\",\n  \"endereco\": \"Av. Boa Viagem, 1000, Recife - PE\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/estabelecimentos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"estabelecimentos"
+							]
+						},
+						"description": "Cria um novo estabelecimento. Requer perfil ADMIN."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Listar Estabelecimentos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/estabelecimentos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"estabelecimentos"
+							]
+						},
+						"description": "Lista todos os estabelecimentos cadastrados."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Buscar Estabelecimento por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/estabelecimentos/{{estabelecimentoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"estabelecimentos",
+								"{{estabelecimentoId}}"
+							]
+						},
+						"description": "Busca os detalhes de um estabelecimento pelo ID."
+					},
+					"response": []
+				},
+				{
+					"name": "4. Deletar Estabelecimento",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/estabelecimentos/{{estabelecimentoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"estabelecimentos",
+								"{{estabelecimentoId}}"
+							]
+						},
+						"description": "Exclusão lógica do estabelecimento."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "03 - Usuários (RBAC)",
+			"item": [
+				{
+					"name": "1. Criar Gerente (ADMIN -> Loja)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Carlos Gerente\",\n  \"email\": \"{{gerenteEmail}}\",\n  \"senha\": \"{{gerenteSenha}}\",\n  \"estabelecimentoId\": {{estabelecimentoId}}\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/usuarios/gerente",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"usuarios",
+								"gerente"
+							]
+						},
+						"description": "ADMIN cria um usuário com perfil GERENTE vinculado ao estabelecimento informado."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Criar Operador (GERENTE -> Própria Loja)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Maria Operadora\",\n  \"email\": \"{{operadorEmail}}\",\n  \"senha\": \"{{operadorSenha}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/usuarios/operador",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"usuarios",
+								"operador"
+							]
+						},
+						"description": "GERENTE autenticado cria um OPERADOR para a sua própria loja (o estabelecimentoId é inferido pelo token)."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Criar Outro Gerente (GERENTE -> Própria Loja)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Ana Subgerente\",\n  \"email\": \"subgerente@loja1.com\",\n  \"senha\": \"senha123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/usuarios/gerente-loja",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"usuarios",
+								"gerente-loja"
+							]
+						},
+						"description": "GERENTE autenticado cria outro GERENTE para a sua mesma loja."
+					},
+					"response": []
+				},
+				{
+					"name": "4. Listar Todos Usuários (ADMIN)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"usuarios"
+							]
+						},
+						"description": "Lista todos os usuários do sistema. Exige perfil ADMIN."
+					},
+					"response": []
+				},
+				{
+					"name": "5. Deletar Usuário (ADMIN)",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/usuarios/2",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"usuarios",
+								"2"
+							]
+						},
+						"description": "Exclusão lógica do usuário por ID. Exige perfil ADMIN."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "04 - Produtos (Loja)",
+			"item": [
+				{
+					"name": "1. Consultar por Código de Barras (Leitor / Lookup)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos/codigo/7894900011517",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos",
+								"codigo",
+								"7894900011517"
+							]
+						},
+						"description": "Simula a leitura óptica do código de barras pelo app mobile/web. Busca primeiro no histórico cadastrado na loja e, caso inédito, realiza fallback no catálogo aberto (Open Food Facts) retornando { nome, categoria, codigoBarras, origem }."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Cadastrar Produto (Crítico - 3 dias)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"const json = pm.response.json();",
+									"if (json.dados && json.dados.id) {",
+									"    pm.collectionVariables.set(\"produtoId\", json.dados.id);",
+									"    console.log(\"produtoId salvo: \" + json.dados.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Iogurte Natural 170g\",\n  \"categoria\": \"Laticínios\",\n  \"codigoBarras\": \"7891000200202\",\n  \"lote\": \"L-CRITICO-01\",\n  \"quantidade\": 15,\n  \"dataValidade\": \"2026-11-22\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos"
+							]
+						},
+						"description": "Cadastra um produto com validade em 3 dias (situação CRITICO se dias-critico=7)."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Cadastrar Produto (Atenção - 15 dias)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Queijo Mussarela Fatiado 200g\",\n  \"categoria\": \"Frios e Laticínios\",\n  \"codigoBarras\": \"7891000300303\",\n  \"lote\": \"L-ATENCAO-02\",\n  \"quantidade\": 25,\n  \"dataValidade\": \"2026-12-04\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos"
+							]
+						},
+						"description": "Cadastra um produto com validade em 15 dias (situação ATENCAO se dias-atencao=30)."
+					},
+					"response": []
+				},
+				{
+					"name": "4. Cadastrar Produto (OK - 60 dias)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Arroz Branco Tipo 1 - 5kg\",\n  \"categoria\": \"Mercearia\",\n  \"codigoBarras\": \"7891000400404\",\n  \"lote\": \"L-OK-03\",\n  \"quantidade\": 100,\n  \"dataValidade\": \"2027-01-18\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos"
+							]
+						},
+						"description": "Cadastra um produto com prazo longo (situação OK)."
+					},
+					"response": []
+				},
+				{
+					"name": "5. Cadastrar Produto (Vencido - Ontem)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Pão de Forma Tradicional 500g\",\n  \"categoria\": \"Padaria\",\n  \"codigoBarras\": \"7891000500505\",\n  \"lote\": \"L-VENCIDO-04\",\n  \"quantidade\": 4,\n  \"dataValidade\": \"2026-11-18\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos"
+							]
+						},
+						"description": "Cadastra um produto com data no passado (situação VENCIDO)."
+					},
+					"response": []
+				},
+				{
+					"name": "6. Listar Produtos da Loja",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos"
+							]
+						},
+						"description": "Lista os produtos ativos da loja do usuário autenticado, ordenados por data de validade crescente."
+					},
+					"response": []
+				},
+				{
+					"name": "7. Dashboard de Validade",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos/dashboard",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos",
+								"dashboard"
+							]
+						},
+						"description": "Retorna o total de produtos e o quantitativo por situação (OK, ATENCAO, CRITICO, VENCIDOS)."
+					},
+					"response": []
+				},
+				{
+					"name": "8. Alertas de Validade",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos/alertas",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos",
+								"alertas"
+							]
+						},
+						"description": "Retorna apenas os produtos em situação ATENÇÃO, CRÍTICO ou VENCIDO, ordenados por vencimento."
+					},
+					"response": []
+				},
+				{
+					"name": "9. Buscar Produtos (Filtros e Paginação)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos/buscar?nome=Iogurte&categoria=Laticínios&situacao=CRITICO&page=0&size=10&sort=dataValidade,asc",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos",
+								"buscar"
+							],
+							"query": [
+								{
+									"key": "nome",
+									"value": "Iogurte",
+									"description": "Filtro parcial por nome (case-insensitive)"
+								},
+								{
+									"key": "categoria",
+									"value": "Laticínios",
+									"description": "Filtro exato por categoria (case-insensitive)"
+								},
+								{
+									"key": "situacao",
+									"value": "CRITICO",
+									"description": "OK | ATENCAO | CRITICO | VENCIDO"
+								},
+								{
+									"key": "inicio",
+									"value": "2026-11-01",
+									"disabled": true,
+									"description": "Data inicial de validade (AAAA-MM-DD)"
+								},
+								{
+									"key": "fim",
+									"value": "2026-11-30",
+									"disabled": true,
+									"description": "Data final de validade (AAAA-MM-DD)"
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Número da página"
+								},
+								{
+									"key": "size",
+									"value": "10",
+									"description": "Tamanho da página"
+								},
+								{
+									"key": "sort",
+									"value": "dataValidade,asc",
+									"description": "Ordenação"
+								}
+							]
+						},
+						"description": "Busca paginada e dinâmica com múltiplos filtros combinados via ProdutoSpecification."
+					},
+					"response": []
+				},
+				{
+					"name": "10. Histórico de Baixas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos/historico?page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos",
+								"historico"
+							],
+							"query": [
+								{
+									"key": "motivo",
+									"value": "VENDIDO",
+									"disabled": true,
+									"description": "VENDIDO | DESCARTADO | RETIRADO"
+								},
+								{
+									"key": "inicio",
+									"value": "2026-11-01",
+									"disabled": true,
+									"description": "Data inicial da baixa (AAAA-MM-DD)"
+								},
+								{
+									"key": "fim",
+									"value": "2026-11-30",
+									"disabled": true,
+									"description": "Data final da baixa (AAAA-MM-DD)"
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Página"
+								},
+								{
+									"key": "size",
+									"value": "10",
+									"description": "Tamanho da página"
+								}
+							]
+						},
+						"description": "Lista o histórico de produtos que receberam baixa na loja."
+					},
+					"response": []
+				},
+				{
+					"name": "11. Buscar Produto por ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos",
+								"{{produtoId}}"
+							]
+						},
+						"description": "Busca um produto específico pelo ID."
+					},
+					"response": []
+				},
+				{
+					"name": "12. Atualizar Produto (Recalcula Situação)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nome\": \"Iogurte Natural 170g (Atualizado)\",\n  \"categoria\": \"Laticínios\",\n  \"codigoBarras\": \"7891000200202\",\n  \"lote\": \"L-CRITICO-01B\",\n  \"quantidade\": 20,\n  \"dataValidade\": \"2026-12-10\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos",
+								"{{produtoId}}"
+							]
+						},
+						"description": "Atualiza dados do produto e recalcula automaticamente a situação de validade com base na nova data."
+					},
+					"response": []
+				},
+				{
+					"name": "13. Dar Baixa no Produto",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"motivo\": \"VENDIDO\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/produtos/{{produtoId}}/baixa",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"produtos",
+								"{{produtoId}}",
+								"baixa"
+							]
+						},
+						"description": "Dá baixa no produto informando o motivo (VENDIDO, DESCARTADO ou RETIRADO). Desativa o produto (soft delete) e grava dataBaixa."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "05 - Documentação OpenAPI & Swagger",
+			"item": [
+				{
+					"name": "1. OpenAPI JSON Docs",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v3/api-docs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v3",
+								"api-docs"
+							]
+						},
+						"description": "Especificação da API em formato JSON OpenAPI 3."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Swagger UI",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/swagger-ui/index.html",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"swagger-ui",
+								"index.html"
+							]
+						},
+						"description": "Interface interativa do Swagger UI para testar endpoints pelo navegador."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

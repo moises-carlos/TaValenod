@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -29,7 +30,9 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "produtos")
+@Table(name = "produtos", indexes = {
+        @Index(name = "idx_produtos_estabelecimento_codigo", columnList = "estabelecimento_id, codigo_barras")
+})
 public class Produto extends EntidadeBase<Long> {
 
     @Column(nullable = false, length = 150)
